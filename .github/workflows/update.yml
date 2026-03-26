@@ -2,14 +2,17 @@ name: Update iCal Calendar
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Täglich um 00:00 Uhr
-  workflow_dispatch: # Ermöglicht manuelles Starten
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # WICHTIG: Erlaubt das Hochladen der Datei
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # Fix für die Warnung
 
     steps:
       - name: Checkout Repository
@@ -18,10 +21,12 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install Dependencies
-        run: pip install requests ics
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests ics
 
       - name: Run Update Script
         run: python update_calendar.py
@@ -31,5 +36,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add grz_postgarage.ical
-          git commit -m "Automatisches Update des Kalenders" || echo "Keine Änderungen gefunden"
-          git push
+          # Nur committen, wenn sich wirklich etwas geändert hat
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Automatisches Update des Kalenders" && git push)
