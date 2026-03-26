@@ -1,0 +1,35 @@
+name: Update iCal Calendar
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Täglich um 00:00 Uhr
+  workflow_dispatch: # Ermöglicht manuelles Starten
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: pip install requests ics
+
+      - name: Run Update Script
+        run: python update_calendar.py
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add grz_postgarage.ical
+          git commit -m "Automatisches Update des Kalenders" || echo "Keine Änderungen gefunden"
+          git push
